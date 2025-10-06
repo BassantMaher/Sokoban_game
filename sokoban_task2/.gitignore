@@ -20,17 +20,82 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-sokoban_task1-*.tar
+sokoban_task2-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
 
-# Ignore assets that are produced by build tools.
-/priv/static/assets/
+# Environment files - NEVER commit these to version control
+.env
+.env.local
+.env.*.local
+.env.prod
+.env.staging
 
-# Ignore digested assets cache.
-/priv/static/cache_manifest.json
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
-# In case you use Node.js/npm, you want to ignore these.
-npm-debug.log
-/assets/node_modules/
+# Log files
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+assets/node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Phoenix static artifacts
+apps/*/priv/static/assets/
+apps/*/priv/static/cache_manifest.json
+
+# Development secrets
+config/dev.secret.exs
+
+# Backup files
+*.bak
+*.backup
+
+# Runtime configuration
+config/runtime.secret.exs
