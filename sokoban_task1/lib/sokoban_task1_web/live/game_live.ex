@@ -111,13 +111,6 @@ defmodule SokobanTask1Web.GameLive do
     base_classes ++ [cell_class]
   end
 
-  defp cell_class("#"), do: "wall"
-  defp cell_class("@"), do: "player"
-  defp cell_class("$"), do: "box"
-  defp cell_class("."), do: "goal"
-  defp cell_class(" "), do: "empty"
-  defp cell_class(_), do: "empty"
-
   defp cell_symbol("#"), do: ""
   defp cell_symbol("@"), do: ""
   defp cell_symbol("$"), do: ""

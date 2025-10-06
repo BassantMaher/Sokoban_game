@@ -83,6 +83,9 @@ defmodule SokobanTask1Web do
     quote do
       # HTML escaping functionality
       import Phoenix.HTML
+      import Phoenix.HTML.Form
+      import Phoenix.HTML.Tag
+      import Phoenix.HTML.Link
       # Core UI components and translation
       import SokobanTask1Web.CoreComponents
       use Gettext, backend: SokobanTask1Web.Gettext

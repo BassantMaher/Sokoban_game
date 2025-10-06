@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center px-4">
+  <div class="max-w-md w-full space-y-8">
+    <div class="text-center">
+      <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-purple-600">
+        <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h2 class="mt-6 text-3xl font-extrabold text-white">
+        Sign in to Sokoban
+      </h2>
+      <p class="mt-2 text-sm text-purple-200">
+        Welcome back! Ready to solve some puzzles?
+      </p>
+    </div>
+
+    <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl shadow-xl p-8 border border-white border-opacity-20">
+      <.form :let={f} for={to_form(@changeset)} action={~p"/auth/login"} class="space-y-6">
+        <div>
+          <label for="user_email_or_username" class="block text-sm font-medium text-white mb-2">
+            Email or Username
+          </label>
+          <%= text_input f, :email_or_username, 
+            placeholder: "Enter your email or username",
+            class: "w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm",
+            required: true
+          %>
+          <%= error_tag f, :email_or_username %>
+        </div>
+
+        <div>
+          <label for="user_password" class="block text-sm font-medium text-white mb-2">
+            Password
+          </label>
+          <%= password_input f, :password,
+            placeholder: "Enter your password",
+            class: "w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm",
+            required: true
+          %>
+          <%= error_tag f, :password %>
+        </div>
+
+        <div>
+          <%= submit "Sign In", class: "group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-105" %>
+        </div>
+      </.form>
+
+      <div class="mt-6 text-center">
+        <p class="text-purple-200">
+          Don't have an account?
+          <.link href={~p"/auth/register"} class="font-medium text-purple-300 hover:text-white transition-colors duration-200">
+            Sign up here
+          </.link>
+        </p>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <.link href={~p"/"} class="text-purple-300 hover:text-white transition-colors duration-200">
+        ← Back to Home
+      </.link>
+    </div>
+  </div>
+</div>

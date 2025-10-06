@@ -1,5 +1,19 @@
 import Config
 
+# Helper function to get environment variable with fallback
+get_env = fn key, default -> System.get_env(key) || default end
+get_env_int = fn key, default ->
+  case System.get_env(key) do
+    nil -> default
+    value -> String.to_integer(value)
+  end
+end
+
+# Database configuration for development
+config :sokoban_task1, SokobanTask1.Repo,
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -9,11 +23,11 @@ import Config
 config :sokoban_task1, SokobanTask1Web.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  http: [ip: {127, 0, 0, 1}, port: get_env_int.("PHX_PORT", 4000)],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "very_long_secret_key_base_for_development_that_is_definitely_longer_than_64_bytes_and_suitable_for_cookie_encryption",
+  secret_key_base: get_env.("SECRET_KEY_BASE", "very_long_secret_key_base_for_development_that_is_definitely_longer_than_64_bytes_and_suitable_for_cookie_encryption"),
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:sokoban_task1, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:sokoban_task1, ~w(--watch)]}

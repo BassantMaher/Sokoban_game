@@ -209,7 +209,7 @@ body::before {
 }
 
 .player {
-  background-image: url('/assets/man_1057335.png');
+  background-image: url('../man_1057335.png');
   background-color: var(--purple-300);
   border: 2px solid var(--purple-500);
   box-shadow: 
@@ -232,7 +232,7 @@ body::before {
 }
 
 .player-on-goal {
-  background-image: url('/assets/man_1057335.png');
+  background-image: url('../man_1057335.png');
   background-color: var(--purple-400);
   border: 3px solid var(--purple-600);
   box-shadow: 
@@ -257,7 +257,7 @@ body::before {
 }
 
 .box {
-  background-image: url('/assets/box_3638938.png');
+  background-image: url('../box_3638938.png');
   background-color: var(--purple-200);
   border: 2px solid var(--purple-400);
   box-shadow: 
@@ -274,7 +274,7 @@ body::before {
 }
 
 .box-on-goal {
-  background-image: url('/assets/box_3638938.png');
+  background-image: url('../box_3638938.png');
   background-color: var(--purple-500);
   border: 3px solid var(--purple-600);
   box-shadow: 

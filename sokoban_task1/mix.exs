@@ -25,6 +25,7 @@ defmodule SokobanTask1.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.7.10"},
+      {:phoenix_ecto, "~> 4.4"},
       {:phoenix_html, "~> 3.3"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.20.1"},
@@ -37,7 +38,20 @@ defmodule SokobanTask1.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.0"}
+      {:bandit, "~> 1.0"},
+      # Database
+      {:ecto_sql, "~> 3.10"},
+      {:postgrex, ">= 0.0.0"},
+      # Redis for sessions and tokens
+      {:redix, "~> 1.2"},
+      # Authentication
+      {:guardian, "~> 2.3"},
+      {:guardian_phoenix, "~> 2.0"},
+      {:pbkdf2_elixir, "~> 2.0"},
+      # CORS support
+      {:corsica, "~> 2.1"},
+      # HTTP client
+      {:tesla, "~> 1.7"}
     ]
   end
 end
