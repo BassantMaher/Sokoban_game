@@ -163,14 +163,13 @@ defmodule SokobanTask1Web.AdminLive do
           </div>
         </div>
 
-        <div class="w-full px-8 py-8">
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <!-- Create Level Form -->
-            <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200">
-              <h2 class="text-3xl font-black text-purple-900 mb-6 flex items-center gap-3">
-                <span class="text-4xl">➕</span>
-                Create New Level
-              </h2>
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-8 max-w-full">
+          <!-- Create Level Form -->
+          <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 border border-purple-200 mb-8">
+            <h2 class="text-3xl font-black text-purple-900 mb-6 flex items-center gap-3">
+              <span class="text-4xl">➕</span>
+              Create New Level
+            </h2>
 
               <!-- Success Message -->
               <%= if @show_success do %>
@@ -183,22 +182,24 @@ defmodule SokobanTask1Web.AdminLive do
               <% end %>
 
               <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-6">
-                <!-- Level Order (Auto-assigned) -->
-                <div class="p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
-                  <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
-                    Level Order (Auto-assigned)
-                  </label>
-                  <div class="text-3xl font-black text-purple-700">
-                    # <%= @next_order %>
+                <!-- Basic Info Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <!-- Level Order (Auto-assigned) -->
+                  <div class="p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+                    <label class="block text-xs font-black text-purple-900 mb-2 uppercase">
+                      Level Order
+                    </label>
+                    <div class="text-2xl font-black text-purple-700">
+                      # <%= @next_order %>
+                    </div>
+                    <input type="hidden" name="level[order]" value={@next_order} />
                   </div>
-                  <input type="hidden" name="level[order]" value={@next_order} />
-                </div>
 
-                <!-- Level Name -->
-                <div>
-                  <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
-                    Level Name *
-                  </label>
+                  <!-- Level Name -->
+                  <div class="lg:col-span-2">
+                    <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
+                      Level Name *
+                    </label>
                   <input
                     type="text"
                     name="level[name]"
@@ -212,50 +213,54 @@ defmodule SokobanTask1Web.AdminLive do
                       <%= translate_error(@form[:name].errors |> List.first()) %>
                     </p>
                   <% end %>
+                  </div>
                 </div>
 
-                <!-- Difficulty -->
-                <div>
-                  <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
-                    Difficulty *
-                  </label>
-                  <select
-                    name="level[difficulty]"
-                    class="w-full px-4 py-3 border-2 border-purple-300 rounded-xl focus:ring-4 focus:ring-purple-500 focus:border-purple-500 font-semibold"
-                    required
-                  >
-                    <option value="">Select difficulty...</option>
-                    <option value="easy" selected={@form[:difficulty].value == "easy"}>
-                      Easy - Beginner Friendly
-                    </option>
-                    <option value="medium" selected={@form[:difficulty].value == "medium"}>
-                      Medium - Moderate Challenge
-                    </option>
-                    <option value="hard" selected={@form[:difficulty].value == "hard"}>
-                      Hard - Expert Level
-                    </option>
-                    <option value="expert" selected={@form[:difficulty].value == "expert"}>
-                      Expert - Master Only
-                    </option>
-                  </select>
-                  <%= if @form[:difficulty].errors != [] do %>
-                    <p class="mt-1 text-sm text-red-600">
-                      <%= translate_error(@form[:difficulty].errors |> List.first()) %>
-                    </p>
-                  <% end %>
-                </div>
+                <!-- Additional Info Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <!-- Difficulty -->
+                  <div>
+                    <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
+                      Difficulty *
+                    </label>
+                    <select
+                      name="level[difficulty]"
+                      class="w-full px-4 py-3 border-2 border-purple-300 rounded-xl focus:ring-4 focus:ring-purple-500 focus:border-purple-500 font-semibold"
+                      required
+                    >
+                      <option value="">Select difficulty...</option>
+                      <option value="easy" selected={@form[:difficulty].value == "easy"}>
+                        🟢 Easy
+                      </option>
+                      <option value="medium" selected={@form[:difficulty].value == "medium"}>
+                        🟡 Medium
+                      </option>
+                      <option value="hard" selected={@form[:difficulty].value == "hard"}>
+                        🔴 Hard
+                      </option>
+                      <option value="expert" selected={@form[:difficulty].value == "expert"}>
+                        ⚫ Expert
+                      </option>
+                    </select>
+                    <%= if @form[:difficulty].errors != [] do %>
+                      <p class="mt-1 text-sm text-red-600">
+                        <%= translate_error(@form[:difficulty].errors |> List.first()) %>
+                      </p>
+                    <% end %>
+                  </div>
 
-                <!-- Description -->
-                <div>
-                  <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    name="level[description]"
-                    placeholder="Add a description or hint for this level..."
-                    class="w-full px-4 py-3 border-2 border-purple-300 rounded-xl focus:ring-4 focus:ring-purple-500 focus:border-purple-500 font-semibold"
-                    rows="3"
-                  ><%= @form[:description].value %></textarea>
+                  <!-- Description -->
+                  <div>
+                    <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
+                      Description (Optional)
+                    </label>
+                    <textarea
+                      name="level[description]"
+                      placeholder="Add a description or hint for this level..."
+                      class="w-full px-4 py-3 border-2 border-purple-300 rounded-xl focus:ring-4 focus:ring-purple-500 focus:border-purple-500 font-semibold"
+                      rows="3"
+                    ><%= @form[:description].value %></textarea>
+                  </div>
                 </div>
 
                 <!-- Board Data -->
@@ -324,8 +329,10 @@ defmodule SokobanTask1Web.AdminLive do
                     </div>
                   <% end %>
 
-                  <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg overflow-auto flex justify-center items-center min-h-[200px]">
-                    <%= render_board_preview(assigns) %>
+                  <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg overflow-x-auto flex justify-center items-center min-h-[200px]">
+                    <div class="inline-block">
+                      <%= render_board_preview(assigns) %>
+                    </div>
                   </div>
 
                   <div class="mt-3 space-y-2">
@@ -357,49 +364,46 @@ defmodule SokobanTask1Web.AdminLive do
                   </details>
                 </div>
               <% end %>
-            </div>
+          </div>
 
-            <!-- Existing Levels List -->
-            <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200">
-              <h2 class="text-3xl font-black text-purple-900 mb-6 flex items-center gap-3">
-                <span class="text-4xl">📋</span>
-                Existing Levels (<%= length(@levels) %>)
-              </h2>
+          <!-- Existing Levels List -->
+          <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 border border-purple-200">
+            <h2 class="text-3xl font-black text-purple-900 mb-6 flex items-center gap-3">
+              <span class="text-4xl">📋</span>
+              Existing Levels (<%= length(@levels) %>)
+            </h2>
 
-              <div class="space-y-4 max-h-[800px] overflow-y-auto">
-                <%= for level <- @levels do %>
-                  <div class="p-5 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all">
-                    <div class="flex items-start justify-between gap-4">
-                      <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                          <span class="text-2xl font-black text-purple-700">
-                            #<%= level.order %>
-                          </span>
-                          <h3 class="text-xl font-bold text-gray-900">
-                            <%= level.name %>
-                          </h3>
-                        </div>
-                        <div class="flex flex-wrap gap-2 items-center">
-                          <span class={[
-                            "px-3 py-1 rounded-full text-xs font-black uppercase",
-                            difficulty_badge_class(level.difficulty)
-                          ]}>
-                            <%= level.difficulty %>
-                          </span>
-                          <span class="text-sm text-purple-600 font-semibold">
-                            <%= board_size(level.board_data) %>
-                          </span>
-                        </div>
-                        <%= if level.description do %>
-                          <p class="mt-2 text-sm text-gray-600 italic">
-                            <%= level.description %>
-                          </p>
-                        <% end %>
-                      </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <%= for level <- @levels do %>
+                <div class="p-5 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 hover:shadow-lg hover:scale-105 transition-all duration-300">
+                  <div class="flex flex-col gap-3">
+                    <div class="flex items-center gap-3">
+                      <span class="text-2xl font-black text-purple-700">
+                        #<%= level.order %>
+                      </span>
+                      <h3 class="text-lg font-bold text-gray-900 truncate flex-1">
+                        <%= level.name %>
+                      </h3>
                     </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                      <span class={[
+                        "px-3 py-1 rounded-full text-xs font-black uppercase",
+                        difficulty_badge_class(level.difficulty)
+                      ]}>
+                        <%= level.difficulty %>
+                      </span>
+                      <span class="text-sm text-purple-600 font-semibold">
+                        <%= board_size(level.board_data) %>
+                      </span>
+                    </div>
+                    <%= if level.description do %>
+                      <p class="text-sm text-gray-600 italic line-clamp-2">
+                        <%= level.description %>
+                      </p>
+                    <% end %>
                   </div>
-                <% end %>
-              </div>
+                </div>
+              <% end %>
             </div>
           </div>
         </div>
