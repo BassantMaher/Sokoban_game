@@ -8,11 +8,18 @@ defmodule SokobanTask1Web.GameLive do
   alias SokobanTask1.Game
 
   @impl true
-  def mount(_params, _session, socket) do
-    # Get current user and anonymous status from socket assigns
-    # These are set by the fetch_current_user plug
-    current_user = socket.assigns[:current_user]
-    is_anonymous = socket.assigns[:anonymous] || false
+  def mount(_params, session, socket) do
+    IO.puts("\n=== GAME MOUNT ===")
+    IO.inspect(session, label: "Session")
+    IO.inspect(socket.assigns, label: "Socket Assigns")
+    
+    # Get user from socket assigns (set by plug) or session
+    current_user = get_current_user(socket, session)
+    is_anonymous = get_anonymous_status(socket, session)
+    
+    IO.inspect(current_user, label: "Current User (final)")
+    IO.inspect(is_anonymous, label: "Is Anonymous (final)")
+    IO.puts("==================\n")
 
     # Load all levels
     levels = SokobanTask1.Levels.list_levels()
@@ -42,6 +49,37 @@ defmodule SokobanTask1Web.GameLive do
       |> assign(:best_score, load_best_score(current_user, game.level_id))
 
     {:ok, socket}
+  rescue
+    e ->
+      IO.puts("\n❌ ERROR IN MOUNT:")
+      IO.inspect(e)
+      IO.inspect(__STACKTRACE__)
+      {:ok, assign(socket, error: inspect(e))}
+  end
+  
+  # Helper to get current user from socket or session
+  defp get_current_user(socket, session) do
+    cond do
+      # Check socket assigns first (from plug)
+      socket.assigns[:current_user] != nil ->
+        socket.assigns[:current_user]
+      
+      # Check session for user_id
+      is_integer(session["user_id"]) ->
+        case SokobanTask1.Accounts.get_user(session["user_id"]) do
+          nil -> nil
+          user -> user
+        end
+      
+      # No user found
+      true ->
+        nil
+    end
+  end
+  
+  # Helper to get anonymous status
+  defp get_anonymous_status(socket, session) do
+    socket.assigns[:anonymous] || session["anonymous"] || false
   end
 
   @impl true
@@ -92,7 +130,7 @@ defmodule SokobanTask1Web.GameLive do
   @impl true
   def handle_event("select_level", %{"level_id" => level_id_str}, socket) do
     IO.inspect(level_id_str, label: "Selecting level ID")
-    
+
     level_id = String.to_integer(level_id_str)
     level = SokobanTask1.Levels.get_level!(level_id)
     game = Game.new_from_level(level)
@@ -291,25 +329,47 @@ defmodule SokobanTask1Web.GameLive do
     is_anonymous = socket.assigns[:anonymous] || false
     elapsed_time = socket.assigns.elapsed_time
 
-    # Only save if user is logged in (not anonymous) and level_id exists
+    # Debug logging
+    IO.puts("\n=== SAVE SCORE DEBUG ===")
+    IO.inspect(user, label: "Current User")
+    IO.inspect(is_anonymous, label: "Is Anonymous")
+    IO.inspect(game.level_id, label: "Level ID")
+    IO.inspect(elapsed_time, label: "Time")
+    IO.inspect(game.moves, label: "Moves")
+    IO.puts("========================\n")
+
+    # Save score for logged-in users (always save, not just best)
     if !is_anonymous && user != nil && game.level_id != nil do
-      case SokobanTask1.Scores.save_if_best(user.id, game.level_id, elapsed_time, game.moves) do
-        {:ok, %SokobanTask1.Scores.Score{} = score} ->
+      case SokobanTask1.Scores.save_score(user.id, game.level_id, elapsed_time, game.moves) do
+        {:ok, score, :new_best} ->
+          IO.puts("✅ Score saved as NEW BEST!")
           socket
           |> assign(:best_score, score)
           |> put_flash(:info, "🎉 Congratulations! You won! New best score! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}")
 
-        {:ok, :not_best} ->
-          put_flash(socket, :info, "🎉 Congratulations! Level completed! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}. (Not your best score)")
+        {:ok, _score, :not_best} ->
+          IO.puts("✅ Score saved but not best")
+          socket
+          |> assign(:best_score, load_best_score(user, game.level_id))
+          |> put_flash(:info, "🎉 Congratulations! Level completed! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}. (Not your best score)")
 
-        {:error, _} ->
+        {:error, changeset} ->
+          IO.puts("❌ Failed to save score:")
+          IO.inspect(changeset)
           socket
           |> put_flash(:info, "🎉 Congratulations! You won! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}")
-          |> put_flash(:error, "Failed to save score.")
+          |> put_flash(:error, "Failed to save score. Please check the logs.")
       end
     else
       # Anonymous user or no level_id - just show completion message
-      put_flash(socket, :info, "🎉 Congratulations! You won! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}")
+      reason = cond do
+        is_anonymous -> "Playing as anonymous"
+        user == nil -> "No user logged in"
+        game.level_id == nil -> "No level ID"
+        true -> "Unknown reason"
+      end
+      IO.puts("⚠️ Score NOT saved: #{reason}")
+      put_flash(socket, :info, "🎉 Congratulations! You won! Time: #{format_time(elapsed_time)}, Moves: #{game.moves} (Score not saved - #{reason})")
     end
   end
 

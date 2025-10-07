@@ -21,8 +21,10 @@ defmodule SokobanTask1Web.Router do
   scope "/", SokobanTask1Web do
     pipe_through [:browser, :redirect_if_authenticated]
 
-    live "/login", LoginLive
-    live "/register", RegisterLive
+    live_session :public do
+      live "/login", LoginLive
+      live "/register", RegisterLive
+    end
   end
 
   # Protected routes - require authentication or anonymous mode

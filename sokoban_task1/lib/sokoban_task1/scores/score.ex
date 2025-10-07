@@ -18,7 +18,7 @@ defmodule SokobanTask1.Scores.Score do
   def changeset(score, attrs) do
     score
     |> cast(attrs, [:user_id, :level, :level_id, :time_seconds, :moves, :completed_at])
-    |> validate_required([:time_seconds, :moves, :completed_at])
+    |> validate_required([:user_id, :level_id, :time_seconds, :moves, :completed_at])
     |> validate_number(:time_seconds, greater_than_or_equal_to: 0)
     |> validate_number(:moves, greater_than: 0)
     |> foreign_key_constraint(:user_id)

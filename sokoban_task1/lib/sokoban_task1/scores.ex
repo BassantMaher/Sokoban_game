@@ -17,6 +17,51 @@ defmodule SokobanTask1.Scores do
   end
 
   @doc """
+  Saves a score for every completion. Always saves to database.
+  Returns {:ok, score, :new_best} if it's a new best score,
+  {:ok, score, :not_best} if saved but not the best.
+  """
+  def save_score(user_id, level_id, time_seconds, moves) do
+    IO.puts("\n[Scores.save_score] Attempting to save...")
+    IO.inspect(%{user_id: user_id, level_id: level_id, time_seconds: time_seconds, moves: moves}, label: "Score data")
+    
+    # Always create the score record
+    # Note: level field is legacy, we set it to level_id for backward compatibility
+    result = create_score(%{
+      user_id: user_id,
+      level: level_id,        # Legacy field (required by NOT NULL constraint)
+      level_id: level_id,     # New field (foreign key)
+      time_seconds: time_seconds,
+      moves: moves,
+      completed_at: DateTime.utc_now()
+    })
+    
+    IO.inspect(result, label: "Create score result")
+    
+    case result do
+      {:ok, score} ->
+        IO.puts("✅ Score created successfully! ID: #{score.id}")
+        
+        # Check if this is their best score
+        best_score = get_user_best_score(user_id, level_id)
+        
+        is_best = if best_score && best_score.id == score.id do
+          :new_best
+        else
+          :not_best
+        end
+        
+        IO.puts("Status: #{is_best}")
+        {:ok, score, is_best}
+      
+      {:error, changeset} = error ->
+        IO.puts("❌ Failed to create score")
+        IO.inspect(changeset.errors, label: "Changeset errors")
+        error
+    end
+  end
+
+  @doc """
   Saves a score for a user, but only if it's better than their previous best.
   Returns {:ok, score} if saved, {:ok, :not_best} if not the best score.
   For anonymous users (user_id: nil), always saves.
@@ -27,7 +72,8 @@ defmodule SokobanTask1.Scores do
         # No previous score, save this one
         create_score(%{
           user_id: user_id,
-          level_id: level_id,
+          level: level_id,      # Legacy field
+          level_id: level_id,   # New field
           time_seconds: time_seconds,
           moves: moves,
           completed_at: DateTime.utc_now()
@@ -38,7 +84,8 @@ defmodule SokobanTask1.Scores do
         if is_better_score?(time_seconds, moves, best_score.time_seconds, best_score.moves) do
           create_score(%{
             user_id: user_id,
-            level_id: level_id,
+            level: level_id,      # Legacy field
+            level_id: level_id,   # New field
             time_seconds: time_seconds,
             moves: moves,
             completed_at: DateTime.utc_now()
