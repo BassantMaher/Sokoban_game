@@ -11,10 +11,10 @@ defmodule SokobanTask1Web.LeaderboardLive do
 
     # Load all levels for filter dropdown
     levels = Levels.list_levels()
-    
+
     # Default to first level
     selected_level_id = if level = List.first(levels), do: level.id, else: nil
-    
+
     # Load leaderboard data
     leaderboard_data = load_leaderboard_data(selected_level_id, :level)
 
@@ -56,109 +56,129 @@ defmodule SokobanTask1Web.LeaderboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-8 px-4">
-      <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
-          <div class="flex justify-between items-center mb-4">
-            <div>
-              <h1 class="text-4xl font-bold text-gray-800">🏆 Leaderboard</h1>
-              <p class="text-gray-600 mt-2">Top players and high scores</p>
-            </div>
-            <div class="flex gap-4">
-              <a
-                href="/game"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-              >
-                ← Back to Game
-              </a>
-              <%= if !@anonymous do %>
-                <a href="/logout" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">
-                  Logout
+    <div class="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500">
+      <div class="w-full">
+        <!-- Header Section -->
+        <div class="bg-gradient-to-r from-purple-800 to-purple-600 shadow-2xl">
+          <div class="w-full px-8 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div class="flex-1">
+                <h1 class="text-5xl md:text-6xl font-black text-white mb-2 tracking-tight">
+                  🏆 Leaderboard
+                </h1>
+                <p class="text-purple-200 text-lg">Compete with the best players worldwide</p>
+              </div>
+              <div class="flex flex-wrap gap-3">
+                <a
+                  href="/game"
+                  class="px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  ← Back to Game
                 </a>
+                <%= if !@anonymous do %>
+                  <a
+                    href="/logout"
+                    class="px-6 py-3 bg-purple-900/50 backdrop-blur-sm text-white rounded-xl hover:bg-purple-900/70 transition-all duration-300 font-semibold shadow-lg"
+                  >
+                    Logout
+                  </a>
+                <% end %>
+              </div>
+            </div>
+
+            <!-- User Info Card -->
+            <div class="mt-6 p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl">
+              <%= if @anonymous do %>
+                <p class="text-white text-lg">
+                  🎭 <span class="font-bold">Playing as Anonymous</span>
+                  - <a href="/login" class="text-purple-200 hover:text-white underline decoration-2 underline-offset-4">
+                    Login
+                  </a>
+                  to claim your spot on the leaderboard!
+                </p>
+              <% else %>
+                <p class="text-white text-lg">
+                  👤 <span class="font-bold text-purple-200">Logged in as:</span>
+                  <span class="font-black"><%= @current_user.email %></span>
+                </p>
               <% end %>
             </div>
           </div>
-
-          <!-- User Info -->
-          <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-            <%= if @anonymous do %>
-              <p class="text-gray-700">
-                🎭 <span class="font-semibold">Playing as Anonymous</span>
-                - <a href="/login" class="text-blue-600 hover:underline">Login</a> to see your rank!
-              </p>
-            <% else %>
-              <p class="text-gray-700">
-                👤 Logged in as: <span class="font-semibold"><%= @current_user.email %></span>
-              </p>
-            <% end %>
-          </div>
         </div>
 
-        <!-- Filter Options -->
-        <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Filter Leaderboard</h2>
-          
-          <div class="flex flex-wrap gap-4">
-            <!-- Level Filter -->
-            <div class="flex-1 min-w-[300px]">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Level
-              </label>
-              <form phx-change="filter_level">
-                <select
-                  name="level_id"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+        <!-- Filter Section -->
+        <div class="w-full px-8 py-8">
+          <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200">
+            <h2 class="text-3xl font-black text-purple-900 mb-6 flex items-center gap-3">
+              <span class="text-4xl">📊</span>
+              Filter Leaderboard
+            </h2>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+              <!-- Level Filter -->
+              <div class="flex-1">
+                <label class="block text-sm font-bold text-purple-900 mb-3 uppercase tracking-wide">
+                  Select Level
+                </label>
+                <form phx-change="filter_level">
+                  <select
+                    name="level_id"
+                    class="w-full px-5 py-4 border-2 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <%= for level <- @levels do %>
+                      <option value={level.id} selected={level.id == @selected_level_id}>
+                        Level <%= level.order %>: <%= level.name %> (<%= String.capitalize(to_string(level.difficulty)) %>)
+                      </option>
+                    <% end %>
+                  </select>
+                </form>
+              </div>
+
+              <!-- Global Filter Button -->
+              <div class="flex items-end">
+                <button
+                  phx-click="filter_global"
+                  class={[
+                    "px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform",
+                    if(@filter_type == :global,
+                      do: "bg-gradient-to-r from-purple-600 to-purple-800 text-white ring-4 ring-purple-300",
+                      else: "bg-purple-100 text-purple-900 hover:bg-purple-200"
+                    )
+                  ]}
                 >
-                  <%= for level <- @levels do %>
-                    <option value={level.id} selected={level.id == @selected_level_id}>
-                      Level <%= level.order %>: <%= level.name %> (<%= String.capitalize(to_string(level.difficulty)) %>)
-                    </option>
-                  <% end %>
-                </select>
-              </form>
+                  🌍 Global Rankings
+                </button>
+              </div>
             </div>
 
-            <!-- Global Filter Button -->
-            <div class="flex items-end">
-              <button
-                phx-click="filter_global"
-                class={[
-                  "px-6 py-2 rounded-lg font-semibold transition",
-                  if(@filter_type == :global,
-                    do: "bg-purple-600 text-white",
-                    else: "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  )
-                ]}
-              >
-                🌍 Global Leaderboard
-              </button>
+            <!-- Filter Status -->
+            <div class="mt-6 p-4 bg-purple-50 rounded-xl border-l-4 border-purple-600">
+              <%= if @filter_type == :level do %>
+                <p class="text-purple-900 font-semibold">
+                  <span class="text-purple-600">●</span> Showing top scores for
+                  <span class="font-black text-purple-700">
+                    <%= Enum.find(@levels, &(&1.id == @selected_level_id))
+                      |> then(fn level -> level && level.name end) || "Unknown Level" %>
+                  </span>
+                </p>
+              <% else %>
+                <p class="text-purple-900 font-semibold">
+                  <span class="text-purple-600">●</span> Showing global rankings across all levels
+                </p>
+              <% end %>
             </div>
-          </div>
-
-          <!-- Filter Info -->
-          <div class="mt-4 text-sm text-gray-600">
-            <%= if @filter_type == :level do %>
-              <p>
-                Showing top scores for
-                <span class="font-semibold">
-                  <%= Enum.find(@levels, &(&1.id == @selected_level_id))
-                    |> then(fn level -> level && level.name end) || "Unknown Level" %>
-                </span>
-              </p>
-            <% else %>
-              <p>Showing global rankings across all levels</p>
-            <% end %>
           </div>
         </div>
 
         <!-- Leaderboard Table -->
-        <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-          <%= if @filter_type == :level do %>
-            <%= render_level_leaderboard(assigns) %>
-          <% else %>
-            <%= render_global_leaderboard(assigns) %>
-          <% end %>
+        <div class="w-full px-8 pb-8">
+          <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-purple-200">
+            <%= if @filter_type == :level do %>
+              <%= render_level_leaderboard(assigns) %>
+            <% else %>
+              <%= render_global_leaderboard(assigns) %>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
@@ -168,79 +188,95 @@ defmodule SokobanTask1Web.LeaderboardLive do
   defp render_level_leaderboard(assigns) do
     ~H"""
     <div>
-      <div class="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
-        <h2 class="text-2xl font-bold text-white">
-          🎮 Level Leaderboard
+      <div class="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 px-8 py-6">
+        <h2 class="text-3xl font-black text-white flex items-center gap-3">
+          <span class="text-4xl">🎮</span>
+          Level Leaderboard
         </h2>
       </div>
 
       <%= if Enum.empty?(@leaderboard_data) do %>
-        <div class="p-12 text-center text-gray-500">
-          <p class="text-xl">No scores yet for this level!</p>
-          <p class="mt-2">Be the first to complete it!</p>
+        <div class="p-20 text-center">
+          <div class="text-8xl mb-6">🏁</div>
+          <p class="text-2xl font-bold text-purple-900 mb-2">No scores yet for this level!</p>
+          <p class="text-lg text-purple-600">Be the first champion to complete it!</p>
         </div>
       <% else %>
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-100">
+            <thead class="bg-gradient-to-r from-purple-100 to-purple-200">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Rank
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Player
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Time
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Moves
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Completed
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-purple-100">
               <%= for {score, index} <- Enum.with_index(@leaderboard_data, 1) do %>
                 <tr class={[
+                  "hover:bg-purple-50 transition-all duration-200",
                   if(score.user_id == (@current_user && @current_user.id),
-                    do: "bg-blue-50 font-semibold",
+                    do: "bg-purple-100 font-bold shadow-inner",
                     else: ""
                   ),
-                  if(index <= 3, do: "bg-gradient-to-r from-yellow-50 to-orange-50", else: "")
+                  if(index <= 3, do: "bg-gradient-to-r from-yellow-50 via-amber-50 to-orange-50", else: "")
                 ]}>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="text-2xl">
-                      <%= rank_emoji(index) %>
-                    </span>
-                    <span class="ml-2 text-lg font-bold">
-                      <%= index %>
-                    </span>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                      <span class="text-4xl drop-shadow-lg">
+                        <%= rank_emoji(index) %>
+                      </span>
+                      <span class={[
+                        "text-2xl font-black",
+                        if(index <= 3, do: "text-amber-600", else: "text-purple-700")
+                      ]}>
+                        #<%= index %>
+                      </span>
+                    </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-8 py-5 whitespace-nowrap">
                     <div class="flex items-center">
                       <div>
-                        <div class="text-sm font-medium text-gray-900">
+                        <div class="text-lg font-bold text-gray-900">
                           <%= score.user.email %>
                           <%= if score.user_id == (@current_user && @current_user.id) do %>
-                            <span class="ml-2 text-xs text-blue-600">(You)</span>
+                            <span class="ml-3 px-3 py-1 bg-purple-600 text-white text-xs font-black rounded-full uppercase">
+                              You
+                            </span>
                           <% end %>
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">
-                      ⏱️ <%= format_time(score.time_seconds) %>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="text-2xl">⏱️</span>
+                      <span class="text-lg font-bold text-purple-900">
+                        <%= format_time(score.time_seconds) %>
+                      </span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">
-                      🚶 <%= score.moves %>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="text-2xl">🚶</span>
+                      <span class="text-lg font-bold text-purple-900">
+                        <%= score.moves %>
+                      </span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-8 py-5 whitespace-nowrap text-sm text-purple-600 font-semibold">
                     <%= format_date(score.completed_at) %>
                   </td>
                 </tr>
@@ -256,90 +292,121 @@ defmodule SokobanTask1Web.LeaderboardLive do
   defp render_global_leaderboard(assigns) do
     ~H"""
     <div>
-      <div class="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
-        <h2 class="text-2xl font-bold text-white">
-          🌍 Global Rankings
+      <div class="bg-gradient-to-r from-purple-800 via-purple-600 to-purple-700 px-8 py-6">
+        <h2 class="text-3xl font-black text-white flex items-center gap-3">
+          <span class="text-4xl">🌍</span>
+          Global Rankings
         </h2>
-        <p class="text-sm text-green-100 mt-1">
+        <p class="text-purple-200 mt-2 text-lg font-semibold">
           Ranked by unique levels completed and average performance
         </p>
       </div>
 
       <%= if Enum.empty?(@leaderboard_data) do %>
-        <div class="p-12 text-center text-gray-500">
-          <p class="text-xl">No global scores yet!</p>
-          <p class="mt-2">Complete some levels to appear here!</p>
+        <div class="p-20 text-center">
+          <div class="text-8xl mb-6">🌟</div>
+          <p class="text-2xl font-bold text-purple-900 mb-2">No global scores yet!</p>
+          <p class="text-lg text-purple-600">Complete some levels to climb the global ranks!</p>
         </div>
       <% else %>
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-100">
+            <thead class="bg-gradient-to-r from-purple-100 to-purple-200">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Rank
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Player
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Levels Completed
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Avg Time
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Avg Moves
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th class="px-8 py-5 text-left text-sm font-black text-purple-900 uppercase tracking-wider">
                   Best Time
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-purple-100">
               <%= for {stats, index} <- Enum.with_index(@leaderboard_data, 1) do %>
                 <tr class={[
+                  "hover:bg-purple-50 transition-all duration-200",
                   if(stats.user_id == (@current_user && @current_user.id),
-                    do: "bg-blue-50 font-semibold",
+                    do: "bg-purple-100 font-bold shadow-inner",
                     else: ""
                   ),
-                  if(index <= 3, do: "bg-gradient-to-r from-yellow-50 to-orange-50", else: "")
+                  if(index <= 3, do: "bg-gradient-to-r from-yellow-50 via-amber-50 to-orange-50", else: "")
                 ]}>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="text-2xl">
-                      <%= rank_emoji(index) %>
-                    </span>
-                    <span class="ml-2 text-lg font-bold">
-                      <%= index %>
-                    </span>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                      <span class="text-4xl drop-shadow-lg">
+                        <%= rank_emoji(index) %>
+                      </span>
+                      <span class={[
+                        "text-2xl font-black",
+                        if(index <= 3, do: "text-amber-600", else: "text-purple-700")
+                      ]}>
+                        #<%= index %>
+                      </span>
+                    </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="text-lg font-bold text-gray-900">
                       <%= if stats.user do %>
                         <%= stats.user.email %>
                         <%= if stats.user_id == (@current_user && @current_user.id) do %>
-                          <span class="ml-2 text-xs text-blue-600">(You)</span>
+                          <span class="ml-3 px-3 py-1 bg-purple-600 text-white text-xs font-black rounded-full uppercase">
+                            You
+                          </span>
                         <% end %>
                       <% else %>
-                        Unknown User
+                        <span class="text-gray-400">Unknown User</span>
                       <% end %>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-bold text-green-600">
-                      🎯 <%= stats.unique_levels %> levels
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">🎯</span>
+                        <span class="text-xl font-black text-purple-700">
+                          <%= stats.unique_levels %>
+                        </span>
+                        <span class="text-sm font-bold text-purple-600">levels</span>
+                      </div>
+                      <div class="text-xs text-purple-500 font-semibold pl-8">
+                        <%= stats.total_completions %> total plays
+                      </div>
                     </div>
-                    <div class="text-xs text-gray-500">
-                      <%= stats.total_completions %> total plays
+                  </td>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="text-2xl">⏱️</span>
+                      <span class="text-lg font-bold text-purple-900">
+                        <%= format_time(round(stats.avg_time || 0)) %>
+                      </span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ⏱️ <%= format_time(round(stats.avg_time || 0)) %>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="text-2xl">🚶</span>
+                      <span class="text-lg font-bold text-purple-900">
+                        <%= round(stats.avg_moves || 0) %>
+                      </span>
+                    </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    🚶 <%= round(stats.avg_moves || 0) %>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ⚡ <%= format_time(stats.best_time) %>
+                  <td class="px-8 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="text-2xl">⚡</span>
+                      <span class="text-lg font-bold text-purple-900">
+                        <%= format_time(stats.best_time) %>
+                      </span>
+                    </div>
                   </td>
                 </tr>
               <% end %>

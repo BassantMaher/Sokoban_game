@@ -148,7 +148,7 @@ defmodule SokobanTask1.Scores do
           min_id: min(s.id)
         }
       )
-    
+
     # Get the actual best scores with user preloaded
     from(s in Score,
       join: bs in subquery(best_scores_subquery),
