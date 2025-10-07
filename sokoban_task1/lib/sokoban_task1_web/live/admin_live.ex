@@ -26,6 +26,7 @@ defmodule SokobanTask1Web.AdminLive do
         |> assign(:changeset, changeset)
         |> assign(:form, to_form(changeset))
         |> assign(:board_preview, nil)
+        |> assign(:original_board, nil)
         |> assign(:show_success, false)
         |> assign(:success_message, nil)
 
@@ -48,13 +49,16 @@ defmodule SokobanTask1Web.AdminLive do
       |> Levels.change_level(level_params)
       |> Map.put(:action, :validate)
 
-    board_preview = generate_board_preview(level_params["board_data"])
+    # Store original board before padding
+    original_board = level_params["board_data"]
+    board_preview = generate_board_preview(original_board)
 
     {:noreply,
      socket
      |> assign(:changeset, changeset)
      |> assign(:form, to_form(changeset))
      |> assign(:board_preview, board_preview)
+     |> assign(:original_board, original_board)
      |> assign(:show_success, false)}
   end
 
@@ -259,9 +263,17 @@ defmodule SokobanTask1Web.AdminLive do
                   <label class="block text-sm font-black text-purple-900 mb-2 uppercase">
                     Board Data * (One row per line)
                   </label>
-                  <p class="text-sm text-purple-600 mb-2">
-                    Use: # = Wall, @ = Player, $ = Box, . = Goal, (space) = Empty
-                  </p>
+                  <div class="mb-2 space-y-1">
+                    <p class="text-sm text-purple-600">
+                      Use: # = Wall, @ = Player, $ = Box, . = Goal, (space) = Empty
+                    </p>
+                    <div class="flex items-center gap-2 text-xs bg-purple-50 border border-purple-200 rounded-lg p-2">
+                      <span class="text-purple-700">💡 <strong>Auto-padding:</strong></span>
+                      <span class="text-purple-600">
+                        Rows shorter than the longest row will be automatically padded with walls (#) on the right
+                      </span>
+                    </div>
+                  </div>
                   <textarea
                     name="level[board_data]"
                     placeholder={"#####\n#@$.#\n#####"}
@@ -296,11 +308,53 @@ defmodule SokobanTask1Web.AdminLive do
 
               <!-- Board Preview -->
               <%= if @board_preview do %>
-                <div class="mt-8 p-6 bg-purple-50 rounded-xl border-2 border-purple-300">
-                  <h3 class="text-xl font-black text-purple-900 mb-4">Board Preview:</h3>
-                  <div class="bg-white p-4 rounded-lg overflow-auto">
-                    <pre class="font-mono text-sm"><%= @board_preview %></pre>
+                <div class="mt-8 p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-300 shadow-lg">
+                  <h3 class="text-xl font-black text-purple-900 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">👁️</span>
+                    Live Preview
+                  </h3>
+
+                  <!-- Padding Info -->
+                  <%= if has_padding?(@original_board, @board_preview) do %>
+                    <div class="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                      <p class="text-sm text-yellow-800 font-semibold flex items-center gap-2">
+                        <span class="text-lg">⚠️</span>
+                        Auto-padding applied: Some rows were extended with walls to match the longest row
+                      </p>
+                    </div>
+                  <% end %>
+
+                  <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg overflow-auto flex justify-center items-center min-h-[200px]">
+                    <%= render_board_preview(assigns) %>
                   </div>
+
+                  <div class="mt-3 space-y-2">
+                    <p class="text-sm text-purple-700 italic">
+                      ℹ️ This is how players will see your level
+                    </p>
+                    <%= if has_padding?(@original_board, @board_preview) do %>
+                      <p class="text-xs text-yellow-700 font-semibold">
+                        💡 Note: Walls with slightly dimmed appearance indicate auto-padded areas
+                      </p>
+                    <% end %>
+                  </div>
+
+                  <!-- Debug Info -->
+                  <details class="mt-4 text-xs">
+                    <summary class="cursor-pointer text-purple-700 font-semibold hover:text-purple-900">
+                      🔍 Debug: Board Data Structure
+                    </summary>
+                    <div class="mt-2 space-y-2">
+                      <div>
+                        <p class="font-bold text-purple-800">Original (before padding):</p>
+                        <pre class="mt-1 p-3 bg-white rounded border border-purple-200 overflow-auto"><%= inspect(@original_board, pretty: true) %></pre>
+                      </div>
+                      <div>
+                        <p class="font-bold text-purple-800">After padding:</p>
+                        <pre class="mt-1 p-3 bg-white rounded border border-purple-200 overflow-auto"><%= inspect(@board_preview, pretty: true) %></pre>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               <% end %>
             </div>
@@ -378,17 +432,139 @@ defmodule SokobanTask1Web.AdminLive do
       |> String.split("\n")
       |> Enum.map(&String.trim_trailing/1)
       |> Enum.reject(&(&1 == ""))
+      |> Enum.map(&to_string/1)  # Ensure all rows are strings, not atoms
 
     Map.put(params, "board_data", board_array)
   end
 
   defp parse_board_data(params), do: params
 
-  defp generate_board_preview(board_data) when is_list(board_data) do
-    Enum.join(board_data, "\n")
+  defp generate_board_preview(board_data) when is_list(board_data) and length(board_data) > 0 do
+    # Ensure all rows are strings
+    normalized_data =
+      board_data
+      |> Enum.map(fn row ->
+        cond do
+          is_binary(row) -> row
+          is_atom(row) -> Atom.to_string(row)
+          true -> to_string(row)
+        end
+      end)
+
+    # Pad rows to ensure consistent width (minimum 12 columns)
+    normalize_board_width(normalized_data)
   end
 
   defp generate_board_preview(_), do: nil
+
+  # Normalize board width by padding short rows with walls
+  defp normalize_board_width(board_data) do
+    # Find the maximum width, but at least 12
+    max_width =
+      board_data
+      |> Enum.map(&String.length/1)
+      |> Enum.max()
+      |> max(12)
+
+    # Pad each row to max_width
+    Enum.map(board_data, fn row ->
+      current_length = String.length(row)
+
+      if current_length < max_width do
+        # Pad with walls on the right
+        padding = String.duplicate("#", max_width - current_length)
+        row <> padding
+      else
+        row
+      end
+    end)
+  end
+
+  defp render_board_preview(assigns) do
+    ~H"""
+    <%= if @board_preview && is_list(@board_preview) do %>
+      <div class="inline-block">
+        <%= for {row, y} <- Enum.with_index(@board_preview) do %>
+          <div class="flex">
+            <%= for {cell, x} <- Enum.with_index(to_string(row) |> String.graphemes()) do %>
+              <div class={get_preview_cell_classes(cell, x, y, @board_preview, @original_board)}>
+                <%= cell_symbol(cell) %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center text-gray-400 py-8">
+        <p class="text-lg">No preview available</p>
+        <p class="text-sm mt-2">Start designing your level above</p>
+      </div>
+    <% end %>
+    """
+  end
+
+  defp get_preview_cell_classes(cell, x, y, board, original_board) do
+    base_classes = ["cell"]
+
+    # Check if this position is a goal (by checking if there's a '.' in the board)
+    is_goal = String.contains?(cell, ".") or
+              (cell == " " && has_goal_at_position?(board, x, y))
+
+    # Check if this cell is in the padded area
+    is_padded = is_padded_cell?(x, y, original_board)
+
+    # Determine the visual class based on content
+    cell_class = case {cell, is_goal} do
+      {"#", _} -> "wall"
+      {"@", true} -> "player-on-goal"
+      {"@", false} -> "player"
+      {"$", true} -> "box-on-goal"
+      {"$", false} -> "box"
+      {".", _} -> "goal"
+      {" ", true} -> "goal"
+      {" ", false} -> "empty"
+      _ -> "empty"
+    end
+
+    # Add padded class for visual indication
+    padded_class = if is_padded && cell == "#", do: "padded-wall", else: nil
+
+    Enum.reject(base_classes ++ [cell_class, padded_class], &is_nil/1)
+    |> Enum.join(" ")
+  end
+
+  # Check if a cell is in the padded area (beyond original row length)
+  defp is_padded_cell?(x, y, original_board) when is_list(original_board) do
+    original_row = Enum.at(original_board, y)
+
+    if original_row do
+      original_length = String.length(to_string(original_row))
+      x >= original_length
+    else
+      false
+    end
+  end
+
+  defp is_padded_cell?(_x, _y, _original_board), do: false
+
+  # Check if padding was applied
+  defp has_padding?(original_board, padded_board) when is_list(original_board) and is_list(padded_board) do
+    Enum.zip(original_board, padded_board)
+    |> Enum.any?(fn {original, padded} ->
+      String.length(to_string(original)) < String.length(to_string(padded))
+    end)
+  end
+
+  defp has_padding?(_original, _padded), do: false
+
+  defp has_goal_at_position?(_board, _x, _y), do: false
+
+  defp cell_symbol("#"), do: ""
+  defp cell_symbol("@"), do: ""
+  defp cell_symbol("$"), do: ""
+  defp cell_symbol("."), do: ""
+  defp cell_symbol(" "), do: ""
+  defp cell_symbol(_), do: ""
 
   defp difficulty_badge_class("easy"), do: "bg-green-200 text-green-800"
   defp difficulty_badge_class("medium"), do: "bg-yellow-200 text-yellow-800"
