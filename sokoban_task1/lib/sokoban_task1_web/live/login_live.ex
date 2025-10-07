@@ -38,8 +38,8 @@ defmodule SokobanTask1Web.LoginLive do
 
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-md w-full space-y-8 bg-white rounded-lg shadow-2xl p-8">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br py-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-md w-full space-y-8 bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200">
         <div>
           <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
             🎮 Sokoban Game
@@ -73,7 +73,7 @@ defmodule SokobanTask1Web.LoginLive do
                 type="email"
                 autocomplete="email"
                 required
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-purple-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={@form[:email].value}
               />
@@ -86,7 +86,7 @@ defmodule SokobanTask1Web.LoginLive do
                 type="password"
                 autocomplete="current-password"
                 required
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-purple-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={@form[:password].value}
               />
@@ -96,9 +96,9 @@ defmodule SokobanTask1Web.LoginLive do
           <div>
             <button
               type="submit"
-              class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-purple-600 to-purple-800 hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300"
             >
-              Sign in
+              🔓 Sign in
             </button>
           </div>
         </.form>
@@ -114,14 +114,14 @@ defmodule SokobanTask1Web.LoginLive do
 
         <button
           phx-click="play_anonymous"
-          class="w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          class="w-full flex justify-center py-3 px-4 border-2 border-purple-300 text-sm font-bold rounded-xl text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300"
         >
           🎭 Play as Anonymous
         </button>
 
         <div class="text-center">
-          <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500">
-            Don't have an account? Register here
+          <a href="/register" class="font-bold text-purple-600 hover:text-purple-800 transition-colors">
+            Don't have an account? Register here →
           </a>
         </div>
       </div>
