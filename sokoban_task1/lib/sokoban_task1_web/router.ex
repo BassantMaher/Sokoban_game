@@ -32,6 +32,7 @@ defmodule SokobanTask1Web.Router do
     pipe_through [:browser, :require_authenticated_or_anonymous]
 
     live "/game", GameLive
+    live "/leaderboard", LeaderboardLive
   end
 
   # Authentication helper routes

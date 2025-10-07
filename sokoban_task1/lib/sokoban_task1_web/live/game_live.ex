@@ -12,11 +12,11 @@ defmodule SokobanTask1Web.GameLive do
     IO.puts("\n=== GAME MOUNT ===")
     IO.inspect(session, label: "Session")
     IO.inspect(socket.assigns, label: "Socket Assigns")
-    
+
     # Get user from socket assigns (set by plug) or session
     current_user = get_current_user(socket, session)
     is_anonymous = get_anonymous_status(socket, session)
-    
+
     IO.inspect(current_user, label: "Current User (final)")
     IO.inspect(is_anonymous, label: "Is Anonymous (final)")
     IO.puts("==================\n")
@@ -56,27 +56,27 @@ defmodule SokobanTask1Web.GameLive do
       IO.inspect(__STACKTRACE__)
       {:ok, assign(socket, error: inspect(e))}
   end
-  
+
   # Helper to get current user from socket or session
   defp get_current_user(socket, session) do
     cond do
       # Check socket assigns first (from plug)
       socket.assigns[:current_user] != nil ->
         socket.assigns[:current_user]
-      
+
       # Check session for user_id
       is_integer(session["user_id"]) ->
         case SokobanTask1.Accounts.get_user(session["user_id"]) do
           nil -> nil
           user -> user
         end
-      
+
       # No user found
       true ->
         nil
     end
   end
-  
+
   # Helper to get anonymous status
   defp get_anonymous_status(socket, session) do
     socket.assigns[:anonymous] || session["anonymous"] || false
@@ -183,6 +183,12 @@ defmodule SokobanTask1Web.GameLive do
               </span>
             <% end %>
           <% end %>
+          <a
+            href="/leaderboard"
+            class="text-sm bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded"
+          >
+            🏆 Leaderboard
+          </a>
           <a href="/logout" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
             Logout
           </a>

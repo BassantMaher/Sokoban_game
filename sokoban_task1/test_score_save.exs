@@ -44,11 +44,11 @@ case Scores.save_score(user.id, level.id, 120, 50) do
   {:ok, score, :new_best} ->
     IO.puts("\n✅ SUCCESS! Score saved as NEW BEST!")
     IO.inspect(score, label: "Saved score")
-    
+
   {:ok, score, :not_best} ->
     IO.puts("\n✅ SUCCESS! Score saved but not best")
     IO.inspect(score, label: "Saved score")
-    
+
   {:error, changeset} ->
     IO.puts("\n❌ FAILED to save score!")
     IO.inspect(changeset.errors, label: "Errors")

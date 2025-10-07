@@ -24,7 +24,7 @@ defmodule SokobanTask1.Scores do
   def save_score(user_id, level_id, time_seconds, moves) do
     IO.puts("\n[Scores.save_score] Attempting to save...")
     IO.inspect(%{user_id: user_id, level_id: level_id, time_seconds: time_seconds, moves: moves}, label: "Score data")
-    
+
     # Always create the score record
     # Note: level field is legacy, we set it to level_id for backward compatibility
     result = create_score(%{
@@ -35,25 +35,25 @@ defmodule SokobanTask1.Scores do
       moves: moves,
       completed_at: DateTime.utc_now()
     })
-    
+
     IO.inspect(result, label: "Create score result")
-    
+
     case result do
       {:ok, score} ->
         IO.puts("✅ Score created successfully! ID: #{score.id}")
-        
+
         # Check if this is their best score
         best_score = get_user_best_score(user_id, level_id)
-        
+
         is_best = if best_score && best_score.id == score.id do
           :new_best
         else
           :not_best
         end
-        
+
         IO.puts("Status: #{is_best}")
         {:ok, score, is_best}
-      
+
       {:error, changeset} = error ->
         IO.puts("❌ Failed to create score")
         IO.inspect(changeset.errors, label: "Changeset errors")
@@ -135,15 +135,63 @@ defmodule SokobanTask1.Scores do
 
   @doc """
   Gets the top N scores for a level (leaderboard).
+  Only returns the BEST score per user.
   """
   def get_leaderboard(level_id, limit \\ 10) do
+    # Subquery to get best score ID for each user
+    best_scores_subquery =
+      from(s in Score,
+        where: s.level_id == ^level_id and not is_nil(s.user_id),
+        group_by: s.user_id,
+        select: %{
+          user_id: s.user_id,
+          min_id: min(s.id)
+        }
+      )
+    
+    # Get the actual best scores with user preloaded
     from(s in Score,
-      where: s.level_id == ^level_id and not is_nil(s.user_id),
+      join: bs in subquery(best_scores_subquery),
+      on: s.user_id == bs.user_id and s.level_id == ^level_id,
+      where: s.id == bs.min_id,
       order_by: [asc: s.time_seconds, asc: s.moves],
       limit: ^limit,
-      preload: [:user]
+      preload: [:user, :level_record]
     )
     |> Repo.all()
+  end
+
+  @doc """
+  Gets the global leaderboard across all levels.
+  Shows users with most level completions and best average times.
+  """
+  def get_global_leaderboard(limit \\ 10) do
+    user_stats =
+      from(s in Score,
+        where: not is_nil(s.user_id),
+        group_by: s.user_id,
+        select: %{
+          user_id: s.user_id,
+          total_completions: count(s.id),
+          unique_levels: fragment("COUNT(DISTINCT ?)", s.level_id),
+          avg_time: avg(s.time_seconds),
+          avg_moves: avg(s.moves),
+          best_time: min(s.time_seconds)
+        },
+        order_by: [desc: fragment("COUNT(DISTINCT ?)", s.level_id), asc: avg(s.time_seconds)],
+        limit: ^limit
+      )
+      |> Repo.all()
+
+    # Load user info for each stat
+    user_ids = Enum.map(user_stats, & &1.user_id)
+    users = Repo.all(from(u in SokobanTask1.Accounts.User, where: u.id in ^user_ids))
+    users_map = Map.new(users, &{&1.id, &1})
+
+    # Add user to each stat
+    Enum.map(user_stats, fn stat ->
+      Map.put(stat, :user, Map.get(users_map, stat.user_id))
+    end)
   end
 
   @doc """
