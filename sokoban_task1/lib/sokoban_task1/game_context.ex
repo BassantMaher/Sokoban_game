@@ -27,11 +27,12 @@ defmodule SokobanTask1.GameContext do
   end
 
   @doc """
-  Lists all levels ordered by difficulty.
+  Lists all levels ordered by difficulty and creation order.
   """
   def list_levels do
     Level
-    |> order_by([l], [asc: l.difficulty, asc: l.order])
+    |> where([l], l.is_published == true)
+    |> order_by([l], [asc: l.difficulty, asc: l.inserted_at])
     |> Repo.all()
   end
 
@@ -51,16 +52,30 @@ defmodule SokobanTask1.GameContext do
   Starts a new game session.
   """
   def start_game_session(user_id, level_id) do
+    level = get_level!(level_id)
+
+    # Parse board data from JSON to get the actual board
+    initial_board = case Level.parse_board_data(level.board_data) do
+      {:ok, board} -> board
+      {:error, _} -> []
+    end
+
+    # Encode board data to JSON string before passing to changeset
+    encoded_board = case Jason.encode(initial_board) do
+      {:ok, json} -> json
+      {:error, _} -> "[]"
+    end
+
     attrs = %{
       user_id: user_id,
       level_id: level_id,
-      status: :in_progress,
+      status: "in_progress",
       moves_count: 0,
-      current_board: get_level!(level_id).board
+      current_board: encoded_board
     }
 
     %GameSession{}
-    |> GameSession.changeset(attrs)
+    |> GameSession.create_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -69,7 +84,7 @@ defmodule SokobanTask1.GameContext do
   """
   def get_active_game_session(user_id, level_id) do
     GameSession
-    |> where([gs], gs.user_id == ^user_id and gs.level_id == ^level_id and gs.status == :in_progress)
+    |> where([gs], gs.user_id == ^user_id and gs.level_id == ^level_id and gs.status == "in_progress")
     |> Repo.one()
   end
 
@@ -79,7 +94,8 @@ defmodule SokobanTask1.GameContext do
   def make_move(game_session_id, new_board, move_data) do
     game_session = Repo.get!(GameSession, game_session_id)
 
-    move_history = game_session.move_history ++ [move_data]
+    move_history = (game_session.move_history || []) ++ [move_data]
+
 
     attrs = %{
       current_board: new_board,
@@ -101,8 +117,8 @@ defmodule SokobanTask1.GameContext do
     time_taken = DateTime.diff(DateTime.utc_now(), game_session.started_at, :second)
 
     attrs = %{
-      status: :completed,
-      completed_at: DateTime.utc_now(),
+      status: "completed",
+      completed_at: DateTime.utc_now() |> DateTime.truncate(:second),
       current_board: final_board
     }
 
@@ -112,7 +128,11 @@ defmodule SokobanTask1.GameContext do
         create_score_for_session(completed_session, time_taken)
 
         # Update user stats
-        Accounts.update_user_stats(completed_session.user_id, true)
+        case Accounts.update_user_stats(completed_session.user_id, true) do
+          {:ok, _} -> :ok
+  _       -> IO.warn("Failed to update user stats for #{completed_session.user_id}")
+        end
+
 
         {:ok, completed_session}
 
@@ -128,8 +148,8 @@ defmodule SokobanTask1.GameContext do
     game_session = Repo.get!(GameSession, game_session_id)
 
     attrs = %{
-      status: :abandoned,
-      completed_at: DateTime.utc_now()
+      status: "abandoned",
+      completed_at: DateTime.utc_now() |> DateTime.truncate(:second)
     }
 
     result = game_session

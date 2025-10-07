@@ -33,6 +33,16 @@ defmodule SokobanTask1.Guardian do
   end
 
   @doc """
+  Gets user from token.
+  """
+  def get_user_from_token(token) do
+    case decode_and_verify(token) do
+      {:ok, claims} -> resource_from_claims(claims)
+      error -> error
+    end
+  end
+
+  @doc """
   Verifies and extracts user from token.
   """
   def verify_token(token) do

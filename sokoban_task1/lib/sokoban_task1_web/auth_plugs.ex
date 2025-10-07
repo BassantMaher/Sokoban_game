@@ -15,6 +15,7 @@ defmodule SokobanTask1Web.AuthPlugs do
       :load_current_user -> load_current_user(conn, opts)
       :require_auth -> require_auth(conn, opts)
       :require_no_auth -> require_no_auth(conn, opts)
+      :require_admin -> require_admin(conn, opts)
       :authenticate_api -> authenticate_api(conn, opts)
       :maybe_authenticate_api -> maybe_authenticate_api(conn, opts)
       _ -> conn
@@ -54,6 +55,26 @@ defmodule SokobanTask1Web.AuthPlugs do
       |> halt()
     else
       conn
+    end
+  end
+
+  @doc """
+  Requires the user to be an admin. Redirects to unauthorized if not admin.
+  """
+  def require_admin(conn, _opts) do
+    case conn.assigns[:current_user] do
+      %{is_admin: true} ->
+        conn
+      %{is_admin: false} ->
+        conn
+        |> put_flash(:error, "You must be an admin to access this page")
+        |> redirect(to: "/")
+        |> halt()
+      nil ->
+        conn
+        |> put_flash(:error, "You must be logged in as an admin to access this page")
+        |> redirect(to: "/login")
+        |> halt()
     end
   end
 

@@ -15,6 +15,8 @@ prepare_level_data = fn level_data ->
   |> Map.put(:board_data, board_data)
   |> Map.put(:width, width)
   |> Map.put(:height, height)
+  |> Map.put(:is_published, true)  # Make sure levels are published
+  |> Map.put(:is_official, true)   # Mark as official levels
   |> Map.delete(:board)
 end
 

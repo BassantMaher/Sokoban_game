@@ -105,8 +105,6 @@ body::before {
 
 .game-board {
   display: grid;
-  grid-template-columns: repeat(12, 40px);
-  grid-template-rows: repeat(10, 40px);
   gap: 2px;
   border: 3px solid var(--purple-600);
   background: linear-gradient(135deg, var(--purple-100), var(--purple-200));
@@ -209,8 +207,11 @@ body::before {
 }
 
 .player {
-  background-image: url('../man_1057335.png');
+  background-image: url('/assets/man_1057335.png');
   background-color: var(--purple-300);
+  background-size: 30px 30px;
+  background-position: center;
+  background-repeat: no-repeat;
   border: 2px solid var(--purple-500);
   box-shadow: 
     0 0 20px rgba(168, 85, 247, 0.5),
@@ -232,8 +233,11 @@ body::before {
 }
 
 .player-on-goal {
-  background-image: url('../man_1057335.png');
+  background-image: url('/assets/man_1057335.png');
   background-color: var(--purple-400);
+  background-size: 30px 30px;
+  background-position: center;
+  background-repeat: no-repeat;
   border: 3px solid var(--purple-600);
   box-shadow: 
     0 0 25px rgba(192, 132, 252, 0.7),
@@ -257,8 +261,11 @@ body::before {
 }
 
 .box {
-  background-image: url('../box_3638938.png');
+  background-image: url('/assets/box_3638938.png');
   background-color: var(--purple-200);
+  background-size: 30px 30px;
+  background-position: center;
+  background-repeat: no-repeat;
   border: 2px solid var(--purple-400);
   box-shadow: 
     0 4px 8px rgba(139, 92, 246, 0.3),
@@ -274,8 +281,11 @@ body::before {
 }
 
 .box-on-goal {
-  background-image: url('../box_3638938.png');
+  background-image: url('/assets/box_3638938.png');
   background-color: var(--purple-500);
+  background-size: 30px 30px;
+  background-position: center;
+  background-repeat: no-repeat;
   border: 3px solid var(--purple-600);
   box-shadow: 
     0 0 20px rgba(168, 85, 247, 0.6),

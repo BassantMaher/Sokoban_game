@@ -15,6 +15,7 @@ defmodule SokobanTask1.Game.Level do
     field :width, :integer
     field :height, :integer
     field :difficulty, Ecto.Enum, values: [:easy, :medium, :hard, :expert]
+    field :level_number, :integer
     field :minimum_moves, :integer
     field :is_official, :boolean, default: false
     field :is_published, :boolean, default: false
@@ -34,14 +35,16 @@ defmodule SokobanTask1.Game.Level do
   """
   def changeset(level, attrs) do
     level
-    |> cast(attrs, [:name, :description, :board_data, :width, :height, :difficulty, :minimum_moves, :creator_id, :is_official, :is_published])
+    |> cast(attrs, [:name, :description, :board_data, :width, :height, :difficulty, :level_number, :minimum_moves, :creator_id, :is_official, :is_published])
     |> validate_required([:name, :board_data, :width, :height, :difficulty])
     |> validate_length(:name, min: 3, max: 100)
     |> validate_length(:description, max: 500)
     |> validate_number(:width, greater_than: 0, less_than: 50)
     |> validate_number(:height, greater_than: 0, less_than: 50)
+    |> validate_number(:level_number, greater_than: 0)
     |> validate_number(:minimum_moves, greater_than: 0)
     |> validate_board_data()
+    |> unique_constraint(:level_number)
     |> foreign_key_constraint(:creator_id)
   end
 

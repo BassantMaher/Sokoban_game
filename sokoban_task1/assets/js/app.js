@@ -9,6 +9,11 @@ import topbar from "../vendor/topbar"
 let Hooks = {
   KeyboardListener: {
     mounted() {
+      if (!this.el) {
+        console.warn('KeyboardListener: element not available');
+        return;
+      }
+
       this.handleKeyDown = (e) => {
         let direction = null;
         
@@ -38,17 +43,30 @@ let Hooks = {
         
         if (direction) {
           e.preventDefault();
-          this.pushEvent('move', {direction: direction});
+          // Only push event if element is still connected to DOM
+          if (this.el && this.el.isConnected) {
+            this.pushEvent('move', {direction: direction});
+          }
         }
       };
       
       // Focus the element and add event listener
-      this.el.focus();
-      this.el.addEventListener('keydown', this.handleKeyDown);
+      try {
+        this.el.focus();
+        this.el.addEventListener('keydown', this.handleKeyDown);
+      } catch (error) {
+        console.warn('KeyboardListener: Failed to setup event listeners', error);
+      }
     },
     
     destroyed() {
-      this.el.removeEventListener('keydown', this.handleKeyDown);
+      if (this.el && this.handleKeyDown) {
+        try {
+          this.el.removeEventListener('keydown', this.handleKeyDown);
+        } catch (error) {
+          console.warn('KeyboardListener: Failed to cleanup event listeners', error);
+        }
+      }
     }
   }
 };

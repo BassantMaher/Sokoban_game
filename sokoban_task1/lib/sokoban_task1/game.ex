@@ -33,6 +33,17 @@ defmodule SokobanTask1.Game do
       "############"
     ]
 
+    create_game_from_board(board)
+  end
+
+  @doc "Creates a new game from board data (for database levels)"
+  @spec new_level_from_data([String.t()]) :: t()
+  def new_level_from_data(board) when is_list(board) do
+    create_game_from_board(board)
+  end
+
+  # Helper function to create game state from board
+  defp create_game_from_board(board) do
     {player_x, player_y} = find_player(board)
     goal_positions = find_goals(board)
 

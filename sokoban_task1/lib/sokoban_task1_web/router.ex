@@ -36,6 +36,10 @@ defmodule SokobanTask1Web.Router do
     plug SokobanTask1Web.AuthPlugs, :require_no_auth
   end
 
+  pipeline :require_admin do
+    plug SokobanTask1Web.AuthPlugs, :require_admin
+  end
+
   # Public routes
   scope "/", SokobanTask1Web do
     pipe_through :browser
@@ -59,6 +63,18 @@ defmodule SokobanTask1Web.Router do
 
     live "/game", GameLive
     post "/auth/logout", AuthController, :logout
+  end
+
+  # Admin routes
+  scope "/admin", SokobanTask1Web do
+    pipe_through [:browser, :require_admin]
+
+    get "/dashboard", AdminController, :dashboard
+    get "/users", AdminController, :users
+    get "/levels", AdminController, :levels
+    post "/levels", AdminController, :create_level
+    put "/levels/:id", AdminController, :update_level
+    delete "/levels/:id", AdminController, :delete_level
   end
 
   # API routes - Authentication

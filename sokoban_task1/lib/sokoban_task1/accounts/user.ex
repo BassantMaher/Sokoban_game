@@ -98,7 +98,7 @@ defmodule SokobanTask1.Accounts.User do
   """
   def login_timestamp_changeset(user) do
     user
-    |> change(last_login_at: DateTime.utc_now())
+    |> change(last_login_at: DateTime.utc_now() |> DateTime.truncate(:second))
   end
 
   @doc """
