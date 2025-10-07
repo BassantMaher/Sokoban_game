@@ -4,7 +4,7 @@ defmodule SokobanTask1.Game do
   Handles game state as immutable struct and game rules.
   """
 
-  defstruct [:board, :player_pos, :width, :height, :won, :goal_positions]
+  defstruct [:board, :player_pos, :width, :height, :won, :goal_positions, :moves, :level_id, :level_name]
 
   @type t :: %__MODULE__{
           board: [String.t()],
@@ -12,27 +12,16 @@ defmodule SokobanTask1.Game do
           width: integer(),
           height: integer(),
           won: boolean(),
-          goal_positions: MapSet.t()
+          goal_positions: MapSet.t(),
+          moves: integer(),
+          level_id: integer(),
+          level_name: String.t()
         }
 
-  @doc "Creates a new game with the default level"
-  @spec new_level() :: t()
-  def new_level do
-    # Larger and more challenging level: player (@), box ($), goal (.), wall (#), empty ( )
-    # This level requires strategic thinking to push boxes in the right order
-    board = [
-      "############",
-      "#@         #",
-      "# $$ ## $$ #",
-      "#  .  .  . #",
-      "## ### ### #",
-      "#  $  $  $ #",
-      "#  .  .  . #",
-      "# $$ ## $$ #",
-      "#    ..    #",
-      "############"
-    ]
-
+  @doc "Creates a new game from a Level struct"
+  @spec new_from_level(SokobanTask1.Levels.Level.t()) :: t()
+  def new_from_level(%SokobanTask1.Levels.Level{} = level) do
+    board = level.board_data
     {player_x, player_y} = find_player(board)
     goal_positions = find_goals(board)
 
@@ -42,8 +31,51 @@ defmodule SokobanTask1.Game do
       width: String.length(Enum.at(board, 0)),
       height: length(board),
       won: false,
-      goal_positions: goal_positions
+      goal_positions: goal_positions,
+      moves: 0,
+      level_id: level.id,
+      level_name: level.name
     }
+  end
+
+  @doc "Creates a new game with the default level (for backward compatibility)"
+  @spec new_level() :: t()
+  def new_level do
+    # Try to load level 1 from database, fallback to hardcoded
+    case SokobanTask1.Levels.get_first_level() do
+      nil ->
+        # Fallback to hardcoded level if database is empty
+        board = [
+          "############",
+          "#@         #",
+          "# $$ ## $$ #",
+          "#  .  .  . #",
+          "## ### ### #",
+          "#  $  $  $ #",
+          "#  .  .  . #",
+          "# $$ ## $$ #",
+          "#    ..    #",
+          "############"
+        ]
+
+        {player_x, player_y} = find_player(board)
+        goal_positions = find_goals(board)
+
+        %__MODULE__{
+          board: board,
+          player_pos: {player_x, player_y},
+          width: String.length(Enum.at(board, 0)),
+          height: length(board),
+          won: false,
+          goal_positions: goal_positions,
+          moves: 0,
+          level_id: nil,
+          level_name: "Default Level"
+        }
+
+      level ->
+        new_from_level(level)
+    end
   end
 
   @doc "Attempts to move the player in the given direction"
@@ -65,11 +97,13 @@ defmodule SokobanTask1.Game do
       get_cell(game, new_x, new_y) in [" ", "."] ->
         game
         |> move_player_to(new_x, new_y)
+        |> increment_moves()
         |> check_win()
 
       # Trying to push a box
       get_cell(game, new_x, new_y) == "$" ->
         push_box(game, px, py, new_x, new_y, dx, dy)
+        |> increment_moves()
 
       # Invalid move
       true ->
@@ -188,5 +222,9 @@ defmodule SokobanTask1.Game do
 
   defp check_win(%__MODULE__{} = game) do
     %{game | won: check_win?(game)}
+  end
+
+  defp increment_moves(%__MODULE__{moves: moves} = game) do
+    %{game | moves: moves + 1}
   end
 end

@@ -9,12 +9,25 @@ defmodule SokobanTask1Web.GameLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    game = Game.new_level()
-
     # Get current user and anonymous status from socket assigns
     # These are set by the fetch_current_user plug
     current_user = socket.assigns[:current_user]
     is_anonymous = socket.assigns[:anonymous] || false
+
+    # Load all levels
+    levels = SokobanTask1.Levels.list_levels()
+
+    # Start with first level or fallback
+    game =
+      case List.first(levels) do
+        nil -> Game.new_level()
+        level -> Game.new_from_level(level)
+      end
+
+    # Start timer - send tick message every second
+    if connected?(socket) do
+      :timer.send_interval(1000, self(), :tick)
+    end
 
     socket =
       socket
@@ -22,6 +35,11 @@ defmodule SokobanTask1Web.GameLive do
       |> assign(:page_title, "Sokoban Game")
       |> assign(:current_user, current_user)
       |> assign(:anonymous, is_anonymous)
+      |> assign(:start_time, System.system_time(:second))
+      |> assign(:elapsed_time, 0)
+      |> assign(:levels, levels)
+      |> assign(:selected_level_id, game.level_id)
+      |> assign(:best_score, load_best_score(current_user, game.level_id))
 
     {:ok, socket}
   end
@@ -29,9 +47,20 @@ defmodule SokobanTask1Web.GameLive do
   @impl true
   def handle_event("move", %{"direction" => direction}, socket) do
     direction_atom = String.to_existing_atom(direction)
-    new_game = Game.move(socket.assigns.game, direction_atom)
+    old_game = socket.assigns.game
+    new_game = Game.move(old_game, direction_atom)
 
-    {:noreply, assign(socket, :game, new_game)}
+    socket = assign(socket, :game, new_game)
+
+    # If game just won, save the score
+    socket =
+      if not old_game.won and new_game.won do
+        save_score_on_win(socket)
+      else
+        socket
+      end
+
+    {:noreply, socket}
   rescue
     ArgumentError ->
       # Invalid direction, ignore
@@ -40,8 +69,61 @@ defmodule SokobanTask1Web.GameLive do
 
   @impl true
   def handle_event("reset", _params, socket) do
-    game = Game.new_level()
-    {:noreply, assign(socket, :game, game)}
+    # Reset current level
+    level_id = socket.assigns.selected_level_id
+
+    game =
+      if level_id do
+        level = SokobanTask1.Levels.get_level!(level_id)
+        Game.new_from_level(level)
+      else
+        Game.new_level()
+      end
+
+    socket =
+      socket
+      |> assign(:game, game)
+      |> assign(:start_time, System.system_time(:second))
+      |> assign(:elapsed_time, 0)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("select_level", %{"level_id" => level_id_str}, socket) do
+    IO.inspect(level_id_str, label: "Selecting level ID")
+    
+    level_id = String.to_integer(level_id_str)
+    level = SokobanTask1.Levels.get_level!(level_id)
+    game = Game.new_from_level(level)
+
+    socket =
+      socket
+      |> assign(:game, game)
+      |> assign(:selected_level_id, level_id)
+      |> assign(:start_time, System.system_time(:second))
+      |> assign(:elapsed_time, 0)
+      |> assign(:best_score, load_best_score(socket.assigns.current_user, level_id))
+
+    {:noreply, socket}
+  rescue
+    e ->
+      IO.inspect(e, label: "Error selecting level")
+      {:noreply, put_flash(socket, :error, "Failed to load level: #{inspect(e)}")}
+  end
+
+  @impl true
+  def handle_info(:tick, socket) do
+    # Update elapsed time if game is not won
+    socket =
+      if not socket.assigns.game.won do
+        elapsed = System.system_time(:second) - socket.assigns.start_time
+        assign(socket, :elapsed_time, elapsed)
+      else
+        socket
+      end
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -69,15 +151,66 @@ defmodule SokobanTask1Web.GameLive do
         </div>
       </div>
 
+      <!-- Level Selection -->
+      <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+        <div class="flex items-center gap-4 mb-2">
+          <label for="level-select" class="text-sm font-medium text-gray-700">Select Level:</label>
+          <form phx-change="select_level" class="flex-1">
+            <select
+              id="level-select"
+              name="level_id"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <%= for level <- @levels do %>
+                <option value={level.id} selected={level.id == @selected_level_id}>
+                  <%= level.order %>. <%= level.name %> - <%= String.capitalize(to_string(level.difficulty)) %>
+                </option>
+              <% end %>
+            </select>
+          </form>
+          <button
+            phx-click="reset"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          >
+            Reset
+          </button>
+        </div>
+        <div class="text-center">
+          <span class="text-lg font-semibold text-gray-800">
+            <%= @game.level_name %>
+          </span>
+        </div>
+      </div>
+
       <div class="game-info text-center mb-4">
         <p class="text-gray-600">Use WASD or Arrow Keys to move</p>
         <p class="text-gray-600">Push all boxes onto green goals to win this challenging puzzle!</p>
       </div>
 
+      <div class="stats-bar flex justify-center gap-8 mb-4 text-lg font-semibold">
+        <div class="stat">
+          <span class="text-gray-600">⏱️ Time:</span>
+          <span class="text-blue-600"><%= format_time(@elapsed_time) %></span>
+        </div>
+        <div class="stat">
+          <span class="text-gray-600">🚶 Moves:</span>
+          <span class="text-green-600"><%= @game.moves %></span>
+        </div>
+        <%= if @best_score do %>
+          <div class="stat">
+            <span class="text-gray-600">⭐ Best:</span>
+            <span class="text-purple-600"><%= format_time(@best_score.time_seconds) %> / <%= @best_score.moves %>m</span>
+          </div>
+        <% end %>
+      </div>
+
       <%= if @game.won do %>
         <div class="win-message text-center mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
           <h2 class="text-2xl font-bold">🎉 You Won! 🎉</h2>
-          <p>Congratulations! You solved the puzzle!</p>
+          <p>Time: <%= format_time(@elapsed_time) %> | Moves: <%= @game.moves %></p>
+          <%= if @best_score && @best_score.time_seconds == @elapsed_time && @best_score.moves == @game.moves do %>
+            <p class="text-sm mt-2">🏆 This is your best score!</p>
+          <% end %>
         </div>
       <% end %>
 
@@ -143,4 +276,46 @@ defmodule SokobanTask1Web.GameLive do
   defp cell_symbol("."), do: ""
   defp cell_symbol(" "), do: ""
   defp cell_symbol(_), do: ""
+
+  # Score management helpers
+
+  defp load_best_score(nil, _level_id), do: nil
+
+  defp load_best_score(user, level_id) do
+    SokobanTask1.Scores.get_user_best_score(user.id, level_id)
+  end
+
+  defp save_score_on_win(socket) do
+    game = socket.assigns.game
+    user = socket.assigns.current_user
+    is_anonymous = socket.assigns[:anonymous] || false
+    elapsed_time = socket.assigns.elapsed_time
+
+    # Only save if user is logged in (not anonymous) and level_id exists
+    if !is_anonymous && user != nil && game.level_id != nil do
+      case SokobanTask1.Scores.save_if_best(user.id, game.level_id, elapsed_time, game.moves) do
+        {:ok, %SokobanTask1.Scores.Score{} = score} ->
+          socket
+          |> assign(:best_score, score)
+          |> put_flash(:info, "🎉 Congratulations! You won! New best score! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}")
+
+        {:ok, :not_best} ->
+          put_flash(socket, :info, "🎉 Congratulations! Level completed! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}. (Not your best score)")
+
+        {:error, _} ->
+          socket
+          |> put_flash(:info, "🎉 Congratulations! You won! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}")
+          |> put_flash(:error, "Failed to save score.")
+      end
+    else
+      # Anonymous user or no level_id - just show completion message
+      put_flash(socket, :info, "🎉 Congratulations! You won! Time: #{format_time(elapsed_time)}, Moves: #{game.moves}")
+    end
+  end
+
+  defp format_time(seconds) do
+    minutes = div(seconds, 60)
+    secs = rem(seconds, 60)
+    "#{minutes}:#{String.pad_leading(Integer.to_string(secs), 2, "0")}"
+  end
 end
