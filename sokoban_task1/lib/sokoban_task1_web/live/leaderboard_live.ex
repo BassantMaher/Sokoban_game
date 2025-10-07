@@ -75,6 +75,14 @@ defmodule SokobanTask1Web.LeaderboardLive do
                 >
                   ← Back to Game
                 </a>
+                <%= if @current_user && @current_user.role == "admin" do %>
+                  <a
+                    href="/admin"
+                    class="px-6 py-3 bg-white/30 backdrop-blur-sm text-white rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:scale-105"
+                  >
+                    ⚙️ Admin Panel
+                  </a>
+                <% end %>
                 <%= if !@anonymous do %>
                   <a
                     href="/logout"

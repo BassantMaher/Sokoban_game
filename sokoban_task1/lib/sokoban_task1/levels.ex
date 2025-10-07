@@ -74,4 +74,36 @@ defmodule SokobanTask1.Levels do
     from(l in Level, where: l.difficulty == ^difficulty, order_by: [asc: l.order])
     |> Repo.all()
   end
+
+  @doc """
+  Gets the next available level order number.
+  Automatically increments from the highest existing order.
+  """
+  def get_next_level_order do
+    case Repo.one(from l in Level, select: max(l.order)) do
+      nil -> 1
+      max_order -> max_order + 1
+    end
+  end
+
+  @doc """
+  Creates a new level with automatic order assignment if not provided.
+  """
+  def create_level_with_order(attrs) do
+    attrs_with_order =
+      if Map.has_key?(attrs, :order) || Map.has_key?(attrs, "order") do
+        attrs
+      else
+        Map.put(attrs, :order, get_next_level_order())
+      end
+
+    create_level(attrs_with_order)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking level changes.
+  """
+  def change_level(%Level{} = level, attrs \\ %{}) do
+    Level.changeset(level, attrs)
+  end
 end

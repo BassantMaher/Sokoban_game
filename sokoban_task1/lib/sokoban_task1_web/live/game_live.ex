@@ -183,6 +183,14 @@ defmodule SokobanTask1Web.GameLive do
               </span>
             <% end %>
           <% end %>
+          <%= if @current_user && @current_user.role == "admin" do %>
+            <a
+              href="/admin"
+              class="text-sm bg-purple-700 hover:bg-purple-800 text-white px-3 py-1 rounded"
+            >
+              ⚙️ Admin Panel
+            </a>
+          <% end %>
           <a
             href="/leaderboard"
             class="text-sm bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded"

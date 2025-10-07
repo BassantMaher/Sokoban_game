@@ -35,6 +35,13 @@ defmodule SokobanTask1Web.Router do
     live "/leaderboard", LeaderboardLive
   end
 
+  # Admin routes - require admin role
+  scope "/admin", SokobanTask1Web do
+    pipe_through [:browser, :fetch_current_user, :require_admin]
+
+    live "/", AdminLive
+  end
+
   # Authentication helper routes
   scope "/auth", SokobanTask1Web do
     pipe_through :browser
