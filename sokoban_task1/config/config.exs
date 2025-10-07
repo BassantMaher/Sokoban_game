@@ -8,6 +8,7 @@
 import Config
 
 config :sokoban_task1,
+  ecto_repos: [SokobanTask1.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint

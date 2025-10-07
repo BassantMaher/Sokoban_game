@@ -7,6 +7,7 @@ defmodule SokobanTask1.Application do
   def start(_type, _args) do
     children = [
       SokobanTask1Web.Telemetry,
+      SokobanTask1.Repo,
       {DNSCluster, query: Application.get_env(:sokoban_task1, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: SokobanTask1.PubSub},
       SokobanTask1Web.Endpoint

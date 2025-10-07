@@ -11,10 +11,17 @@ defmodule SokobanTask1Web.GameLive do
   def mount(_params, _session, socket) do
     game = Game.new_level()
 
+    # Get current user and anonymous status from socket assigns
+    # These are set by the fetch_current_user plug
+    current_user = socket.assigns[:current_user]
+    is_anonymous = socket.assigns[:anonymous] || false
+
     socket =
       socket
       |> assign(:game, game)
       |> assign(:page_title, "Sokoban Game")
+      |> assign(:current_user, current_user)
+      |> assign(:anonymous, is_anonymous)
 
     {:ok, socket}
   end
@@ -41,7 +48,26 @@ defmodule SokobanTask1Web.GameLive do
   def render(assigns) do
     ~H"""
     <div class="sokoban-game" phx-hook="KeyboardListener" id="game-container" tabindex="0">
-      <h1 class="text-3xl font-bold text-center mb-6">Sokoban Game</h1>
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">Sokoban Game</h1>
+        <div class="flex items-center gap-4">
+          <%= if @anonymous do %>
+            <span class="text-sm text-gray-600">🎭 Playing as Anonymous</span>
+          <% else %>
+            <%= if @current_user do %>
+              <span class="text-sm text-gray-600">
+                👤 <%= @current_user.email %>
+                <%= if @current_user.role == "admin" do %>
+                  <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">Admin</span>
+                <% end %>
+              </span>
+            <% end %>
+          <% end %>
+          <a href="/logout" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+            Logout
+          </a>
+        </div>
+      </div>
 
       <div class="game-info text-center mb-4">
         <p class="text-gray-600">Use WASD or Arrow Keys to move</p>
@@ -110,13 +136,6 @@ defmodule SokobanTask1Web.GameLive do
 
     base_classes ++ [cell_class]
   end
-
-  defp cell_class("#"), do: "wall"
-  defp cell_class("@"), do: "player"
-  defp cell_class("$"), do: "box"
-  defp cell_class("."), do: "goal"
-  defp cell_class(" "), do: "empty"
-  defp cell_class(_), do: "empty"
 
   defp cell_symbol("#"), do: ""
   defp cell_symbol("@"), do: ""

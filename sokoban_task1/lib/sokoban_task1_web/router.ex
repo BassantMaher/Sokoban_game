@@ -1,6 +1,8 @@
 defmodule SokobanTask1Web.Router do
   use SokobanTask1Web, :router
 
+  import SokobanTask1Web.Auth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -8,16 +10,42 @@ defmodule SokobanTask1Web.Router do
     plug :put_root_layout, html: {SokobanTask1Web.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :fetch_current_user
   end
 
   pipeline :api do
     plug :accepts, ["json"]
   end
 
+  # Public routes - accessible without authentication
+  scope "/", SokobanTask1Web do
+    pipe_through [:browser, :redirect_if_authenticated]
+
+    live "/login", LoginLive
+    live "/register", RegisterLive
+  end
+
+  # Protected routes - require authentication or anonymous mode
+  scope "/", SokobanTask1Web do
+    pipe_through [:browser, :require_authenticated_or_anonymous]
+
+    live "/game", GameLive
+  end
+
+  # Authentication helper routes
+  scope "/auth", SokobanTask1Web do
+    pipe_through :browser
+
+    get "/login_user/:id", AuthController, :login_user
+    get "/login_anonymous", AuthController, :login_anonymous
+  end
+
+  # Root redirects to login
   scope "/", SokobanTask1Web do
     pipe_through :browser
 
-    live "/", GameLive
+    get "/", PageController, :redirect_to_login
+    get "/logout", SessionController, :delete
   end
 
   # Other scopes may use custom stacks.
